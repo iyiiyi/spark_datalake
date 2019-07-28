@@ -157,7 +157,7 @@ With AWS EMR cluster is running and configuration is properly done
 python etl.py
 ```
 
-## ETL Result Check
+## ETL Output Check
 
 #### 1. Compare `songs` data before writing to S3 and after writing to (& reading from) S3
 

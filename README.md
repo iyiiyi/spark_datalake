@@ -95,7 +95,7 @@ And below is an example of what the data in a log file, 2018-11-12-events.json, 
   - Stop call to SparkSession stops its underlying SparkContext
 
 
-## Schema for Song play analysis
+## Schema for Song Play analysis
 
 #### `Fact table`
 1. `songplays` 

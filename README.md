@@ -102,26 +102,36 @@ And below is an example of what the data in a log file, 2018-11-12-events.json, 
   - Fields: songplay_id, start_time, user_id, level, song_id, artist_id, session_id, location, user_agent
   - Only include records with page value is 'NextSong' from Log dataset
   - Partitioned by year and month
+  - songplays schema
+  ![songplays_schema!](./images/songplays_schema.png "songplays_schema.png")
 
 #### `Dimension tables`
 1. `users`
   - Fields: user_id, first_name, last_name, gender, level
   - user_id field must be unique
   - Keep the last 'level' value of each user in Log dataset
-
+  - users schema
+  ![users_schema!](./images/users_schema.png "users_schema.png")
+  
 2. `songs`
   - Fields: song_id, title, artist_id, year, duration
   - song_id field must be unique
   - Partitioned by year and then artist
+  - songs schema
+  ![songs_schema!](./images/songs_schema.png "songs_schema.png")
   
 3. `artists`
   - Fields: artist_id, name, location, lattitude, longitude
   - artist_id field must be unique
+  - artists schema
+  ![artists_schema!](./images/artists_schema.png "artists_schema.png")
   
 4. `time`
   - Fields: start_time, hour, day, week, month, year, weekday
   - start_time field must be unique
   - Partitioned by year and month
+  - time schema
+  ![time_schema!](./images/time_schema.png "time_schema.png")
 
 
 ## Project Files

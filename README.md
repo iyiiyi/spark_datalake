@@ -9,7 +9,7 @@ In this project, I am going to build an ETL pipeline using knowledge of data lak
 ## Project Goal
 Using AWS S3, AWS EMR, and **Apache Spark**, build an ETL pipelie which transforms data into star schema for use by analytics team.
 
-
+## About Apache Spark
 [Excerpt from Jacek Laskowski's GitBook](https://jaceklaskowski.gitbooks.io/mastering-apache-spark/spark-overview.html)
 
 #### 1. What is Apache Spark

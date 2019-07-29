@@ -65,7 +65,8 @@ def process_song_data(spark, input_data, output_data):
     songs_table = sqlContext.createDataFrame(songs_table.rdd, songs_schema)
     
     # write songs table to parquet files partitioned by year and artist
-    songs_table.write.partitionBy('year', 'artist_id').parquet(os.path.join(output_data, 'songs'), mode='overwrite')
+    songs_table.repartition(col('year'), col('artist_id')).write.partitionBy('year', 'artist_id') \
+               .parquet(os.path.join(output_data, 'songs'), mode='overwrite')
 
     # extract columns to create artists table
     artists_table = df.selectExpr("artist_id", "artist_name as name", "artist_location as location", \
@@ -176,7 +177,8 @@ def process_log_data(spark, input_data, output_data):
     time_table = sqlContext.createDataFrame(time_table.rdd, time_schema)
     
     # write time table to parquet files partitioned by year and month
-    time_table.write.partitionBy('year', 'month').parquet(os.path.join(output_data, 'time'), mode='overwrite')
+    time_table.repartition(col('year'), col('month')).write.partitionBy('year', 'month') \
+              .parquet(os.path.join(output_data, 'time'), mode='overwrite')
 
     # read in song data to use for songplays table
     song_df = spark.read.format("json").load(song_data)
@@ -209,6 +211,7 @@ def process_log_data(spark, input_data, output_data):
     
     # write songplays table to parquet files partitioned by year and month
     songplays_table.withColumn('year', F.year('start_time')).withColumn('month', F.month('start_time')) \
+                   .repartition(col('year'), col('month')) \
                    .write.partitionBy('year', 'month').parquet(os.path.join(output_data, 'songplays'), mode='overwrite')
 
 

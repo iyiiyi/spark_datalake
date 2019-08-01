@@ -4,10 +4,13 @@ import os
 from pyspark import SparkContext, SQLContext
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf, col, count
-from pyspark.sql.functions import year, month, dayofmonth, hour, weekofyear, date_format
+from pyspark.sql.functions import year, month, dayofmonth, hour, \
+                                  weekofyear, date_format
 from pyspark.sql.window import Window
 from pyspark.sql import functions as F
-from pyspark.sql.types import IntegerType, DateType, TimestampType, StructField, StringType, LongType, DoubleType, StructType
+from pyspark.sql.types import IntegerType, DateType, TimestampType, \
+                              StructField, StringType, LongType, \
+			      DoubleType, StructType
 
 config = configparser.ConfigParser()
 config.read('dl.cfg')
@@ -32,7 +35,8 @@ def create_spark_session():
 
 def process_song_data(spark, input_data, output_data):
     """
-    Load Song dataset from AWS S3 into spark and build two dimension tables (songs, artists)
+    Load Song dataset from AWS S3 into spark and build two dimension 
+    tables (songs, artists)
     And writes tables back to S3 in parquet format
 
     Arguments:
@@ -65,12 +69,15 @@ def process_song_data(spark, input_data, output_data):
     songs_table = sqlContext.createDataFrame(songs_table.rdd, songs_schema)
     
     # write songs table to parquet files partitioned by year and artist
-    songs_table.repartition(col('year'), col('artist_id')).write.partitionBy('year', 'artist_id') \
+    songs_table.repartition(col('year'), col('artist_id')) \
+               .write.partitionBy('year', 'artist_id') \
                .parquet(os.path.join(output_data, 'songs'), mode='overwrite')
 
     # extract columns to create artists table
-    artists_table = df.selectExpr("artist_id", "artist_name as name", "artist_location as location",
-                                  "artist_latitude as latitude", "artist_longitude as longitude")
+    artists_table = df.selectExpr("artist_id", "artist_name as name", 
+                                  "artist_location as location",
+                                  "artist_latitude as latitude", 
+				  "artist_longitude as longitude")
     
     # make sure artists table has desired schema
     artists_schema = StructType([ 
@@ -83,12 +90,14 @@ def process_song_data(spark, input_data, output_data):
     artists_table = sqlContext.createDataFrame(artists_table.rdd, artists_schema)
     
     # write artists table to parquet files
-    artists_table.write.parquet(os.path.join(output_data, 'artists'), mode='overwrite')
+    artists_table.write.parquet(os.path.join(output_data, 'artists'),
+                                mode='overwrite')
 
 
 def process_log_data(spark, input_data, output_data):
     """
-    Load Log & Song dataset from AWS S3 into spark and build two dimension tables (users, time) and a fact table (songplays) 
+    Load Log & Song dataset from AWS S3 into spark and build two dimension 
+    tables (users, time) and a fact table (songplays) 
     And writes tables back to S3 in parquet format
 
     Arguments:
@@ -114,16 +123,21 @@ def process_log_data(spark, input_data, output_data):
     df = df.filter(df.page == 'NextSong')
 
     # extract columns for users table
-    # users table need a special treat for keeping the last level value in the log data
+    # users table need a special treat for keeping the last level value 
+    # in the log data
     # For capturing the last level value for each user, Window will be used
-    win1 = Window.partitionBy('userId').orderBy('ts').rangeBetween(Window.unboundedPreceding, 0)
-    df_users = df.filter(col('userId').isNotNull()).select('userId', 'firstName', 'lastName', 'gender', 'level', 'ts') \
+    win1 = Window.partitionBy('userId').orderBy('ts') \
+                 .rangeBetween(Window.unboundedPreceding, 0)
+    df_users = df.filter(col('userId').isNotNull()). \
+                 select('userId', 'firstName', 'lastName', 
+		        'gender', 'level', 'ts') \
                  .withColumn('tsSeq', count('ts').over(win1))
     win2 = Window.partitionBy("userId")
     df_users = df_users.withColumn("tsSeqMax", F.max("tsSeq").over(win2))
     users_table =  df_users.filter((df_users.tsSeq == df_users.tsSeqMax)) \
                            .groupBy('userId') \
-                           .agg(F.max("firstName"), F.max("lastName"), F.max("gender"), F.max("level")) \
+                           .agg(F.max("firstName"), F.max("lastName"),
+			        F.max("gender"), F.max("level")) \
                            .withColumnRenamed('userId', 'user_id') \
                            .withColumnRenamed('max(firstName)', 'first_name') \
                            .withColumnRenamed('max(lastName)', 'last_name') \
@@ -141,7 +155,8 @@ def process_log_data(spark, input_data, output_data):
     users_table = sqlContext.createDataFrame(users_table.rdd, users_schema)
     
     # write users table to parquet files
-    users_table.write.parquet(os.path.join(output_data, 'users'), mode='overwrite')
+    users_table.write.parquet(os.path.join(output_data, 'users'),
+                              mode='overwrite')
 
     # create timestamp column from original timestamp column
     get_timestamp = udf(lambda x: datetime.fromtimestamp(x/1e3), TimestampType())
@@ -177,7 +192,8 @@ def process_log_data(spark, input_data, output_data):
     time_table = sqlContext.createDataFrame(time_table.rdd, time_schema)
     
     # write time table to parquet files partitioned by year and month
-    time_table.repartition(col('year'), col('month')).write.partitionBy('year', 'month') \
+    time_table.repartition(col('year'), col('month')) \
+              .write.partitionBy('year', 'month') \
               .parquet(os.path.join(output_data, 'time'), mode='overwrite')
 
     # read in song data to use for songplays table
@@ -187,9 +203,18 @@ def process_log_data(spark, input_data, output_data):
     t_song = song_df.alias('t_song')
     
     # extract columns from joined song and log datasets to create songplays table 
-    songplays_table = t_log.join(t_song, (col('t_log.song') == col('t_song.title')) & (col('t_log.artist') == col('t_song.artist_name')),how='inner') \
-                           .select([col('t_log.timestamp'),col('t_log.userId'),col('t_log.level'),col('t_song.song_id'),
-                                    col('t_song.artist_id'),col('t_log.sessionId'),col('t_log.location'),col('t_log.userAgent')]) \
+    songplays_table = t_log.join(t_song, \
+                                 (col('t_log.song') == col('t_song.title')) & \
+                                 (col('t_log.artist') == col('t_song.artist_name') \
+				),how='inner') \
+                           .select([col('t_log.timestamp'),\
+			            col('t_log.userId'), \
+			            col('t_log.level'), \
+				    col('t_song.song_id'), \
+                                    col('t_song.artist_id'), \
+				    col('t_log.sessionId'), \
+				    col('t_log.location'), \
+				    col('t_log.userAgent')]) \
                            .withColumnRenamed('timestamp', 'start_time') \
                            .withColumnRenamed('userId', 'user_id') \
                            .withColumnRenamed('sessionId', 'session_id') \
@@ -207,12 +232,16 @@ def process_log_data(spark, input_data, output_data):
                            StructField('location',   StringType(),    True),
                            StructField('user_agent', StringType(),    False)
                        ])
-    songplays_table = sqlContext.createDataFrame(songplays_table.rdd, songplays_schema)
+    songplays_table = sqlContext.createDataFrame(songplays_table.rdd, 
+                                                 songplays_schema)
     
     # write songplays table to parquet files partitioned by year and month
-    songplays_table.withColumn('year', F.year('start_time')).withColumn('month', F.month('start_time')) \
+    songplays_table.withColumn('year', F.year('start_time')) \
+                   .withColumn('month', F.month('start_time')) \
                    .repartition(col('year'), col('month')) \
-                   .write.partitionBy('year', 'month').parquet(os.path.join(output_data, 'songplays'), mode='overwrite')
+                   .write.partitionBy('year', 'month') \
+		   .parquet(os.path.join(output_data, 'songplays'),\
+		            mode='overwrite')
 
 
 def main():
@@ -230,7 +259,7 @@ def main():
     spark = create_spark_session()
     # Set path to input/output data
     input_data = "s3a://udacity-dend/"
-    output_data = "s3a://YOUR_S3_PATH"
+    output_data = "s3a://<YOUR_S3_PATH>"
 
     # Process Song dataset
     process_song_data(spark, input_data, output_data)    

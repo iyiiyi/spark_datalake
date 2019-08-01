@@ -69,7 +69,7 @@ def process_song_data(spark, input_data, output_data):
                .parquet(os.path.join(output_data, 'songs'), mode='overwrite')
 
     # extract columns to create artists table
-    artists_table = df.selectExpr("artist_id", "artist_name as name", "artist_location as location", \
+    artists_table = df.selectExpr("artist_id", "artist_name as name", "artist_location as location",
                                   "artist_latitude as latitude", "artist_longitude as longitude")
     
     # make sure artists table has desired schema
@@ -188,7 +188,7 @@ def process_log_data(spark, input_data, output_data):
     
     # extract columns from joined song and log datasets to create songplays table 
     songplays_table = t_log.join(t_song, (col('t_log.song') == col('t_song.title')) & (col('t_log.artist') == col('t_song.artist_name')),how='inner') \
-                           .select([col('t_log.timestamp'),col('t_log.userId'),col('t_log.level'),col('t_song.song_id'), \
+                           .select([col('t_log.timestamp'),col('t_log.userId'),col('t_log.level'),col('t_song.song_id'),
                                     col('t_song.artist_id'),col('t_log.sessionId'),col('t_log.location'),col('t_log.userAgent')]) \
                            .withColumnRenamed('timestamp', 'start_time') \
                            .withColumnRenamed('userId', 'user_id') \
